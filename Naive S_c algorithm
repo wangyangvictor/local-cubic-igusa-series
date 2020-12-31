@@ -1,0 +1,35 @@
+# https://math.stackexchange.com/questions/52391/testing-whether-a-hypersurface-is-singular
+# https://arxiv.org/pdf/1110.1717.pdf
+# https://math.mit.edu/~poonen/papers/discriminant.pdf
+def Delta(m,F_diag_coeff_list,c):
+    F = F_diag_coeff_list
+    leading_factor = 3*prod(F[i]^(2^(m-2)) for i in range(m))
+    blah = [sqrt(c[k]^3/F[k]) for k in range(m)]
+    rest = prod(blah[0]+sum(j[k]*blah[k+1] for k in range(m-1))
+                for j in cartesian_product([[-1,1] for i in range(m-1)]))
+    return Integer(expand(leading_factor*rest))
+
+def mcalS_abl(m,F,c,p,a,b,l):
+    if l < min(a,b):
+        return "Out of range: l < min(a,b); abort."
+    num = 0
+    for x in cartesian_product([range(p^l) for i in range(m)]):
+        if F(list(x)) % (p^a) == 0 and sum(c[j]*x[j] for j in range(m)) % (p^b) == 0:
+            num += 1
+    return num
+
+def S_c(m,F,c,p,l):
+    if l <= 0:
+        return "S_c(p^l) not implemented for l <= 0, but S_c(p^0) := 1 is a reasonable convention (by multiplicativity)."
+    phiS = (p^(2*l-2)*mcalS_abl(m,F,c,p,l-1,l-1,l)
+            - p^(2*l-1)*(mcalS_abl(m,F,c,p,l-1,l,l) + mcalS_abl(m,F,c,p,l,l-1,l))
+            + p^(2*l)*mcalS_abl(m,F,c,p,l,l,l))
+    return phiS/euler_phi(p^l)
+
+m = 4; c=[1,2,3,4]
+Delta(m,[1 for i in range(m)],c)
+factor(Delta(m,[1 for i in range(m)],c))
+x_1,x_2,x_3,x_4=PolynomialRing(ZZ,m,'x_1,x_2,x_3,x_4').gens()
+F = x_1^3+x_2^3+x_3^3+x_4^3; p = 5
+for l in range(10):
+    print("S_c at", p^l, "is", S_c(m,F,c,p,l))
